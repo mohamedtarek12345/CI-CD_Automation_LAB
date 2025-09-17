@@ -1,0 +1,75 @@
+pipeline {
+    agent any
+
+    environment {
+        NEXUS_HOST = 'YOUR_NEXUS_IP:8082'  // ← REPLACE WITH YOUR NEXUS IP
+        IMAGE_NAME = 'myapp'
+        GITOPS_REPO = 'git@github.com:yourname/gitops-repo.git'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${NEXUS_HOST}/${IMAGE_NAME}:${env.BUILD_ID}")
+                }
+            }
+        }
+
+        stage('Security Scan - Trivy') {
+            steps {
+                sh "trivy image --exit-code 1 --severity CRITICAL ${NEXUS_HOST}/${IMAGE_NAME}:${env.BUILD_ID}"
+            }
+        }
+
+        stage('Code Quality - SonarQube') {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh 'sonar-scanner -Dsonar.projectKey=myapp -Dsonar.sources=. -Dsonar.host.url=http://sonarqube:9000'
+                }
+            }
+        }
+
+        stage('Push to Nexus') {
+            steps {
+                script {
+                    docker.withRegistry("https://${NEXUS_HOST}", 'nexus-creds') {
+                        docker.image("${NEXUS_HOST}/${IMAGE_NAME}:${env.BUILD_ID}").push()
+                        docker.image("${NEXUS_HOST}/${IMAGE_NAME}:build-${env.BUILD_ID}").push()
+                    }
+                }
+            }
+        }
+
+        stage('Update GitOps Repo') {
+            steps {
+                script {
+                    sh """
+                        git clone ${GITOPS_REPO} gitops
+                        cd gitops/charts/myapp
+                        sed -i 's/tag: .*/tag: build-${env.BUILD_ID}/g' values.yaml
+                        cd ../..
+                        git config --global user.email "jenkins@lab.com"
+                        git config --global user.name "Jenkins CI"
+                        git add .
+                        git commit -m "Update image tag to build-${env.BUILD_ID} [skip-ci]"
+                        git push origin main
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            slackSend channel: '#deployments', message: "✅ Deployment Success: Build #${env.BUILD_NUMBER} → Tag build-${env.BUILD_ID} → AKS via Flux"
+        }
+        failure {
+            slackSend channel: '#alerts', message: "❌ Build #${env.BUILD_NUMBER} FAILED in stage ${env.STAGE_NAME}"
+        }
+    }
+}

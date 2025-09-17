@@ -1,0 +1,59 @@
+---
+- name: Configure Windows VM as Jenkins Agent + Monitoring Target
+  hosts: windows-agents
+  vars:
+    jenkins_url: "http://YOUR_JENKINS_IP:8080"  # ← REPLACE
+    agent_name: "win-agent"
+    work_dir: "C:\\jenkins"
+  tasks:
+    - name: Install Chocolatey
+      win_chocolatey:
+        name: chocolatey
+        state: present
+
+    - name: Install Git
+      win_chocolatey:
+        name: git
+        state: present
+
+    - name: Install OpenJDK 11
+      win_chocolatey:
+        name: temurin11jre
+        state: present
+
+    - name: Create Jenkins directory
+      win_file:
+        path: "{{ work_dir }}"
+        state: directory
+
+    - name: Download Jenkins agent JAR
+      win_get_url:
+        url: "{{ jenkins_url }}/jnlpJars/agent.jar"
+        dest: "{{ work_dir }}\\agent.jar"
+
+    - name: Create Jenkins agent launch script
+      win_copy:
+        content: |
+          cd {{ work_dir }}
+          java -jar agent.jar -jnlpUrl {{ jenkins_url }}/computer/{{ agent_name }}/slave-agent.jnlp -secret YOUR_SECRET_HERE -workDir "{{ work_dir }}"
+        dest: "{{ work_dir }}\\start-agent.bat"
+
+    - name: Download Windows Exporter
+      win_get_url:
+        url: "https://github.com/prometheus-community/windows_exporter/releases/download/v0.24.0/windows_exporter-0.24.0-amd64.msi"
+        dest: "{{ work_dir }}\\windows_exporter.msi"
+
+    - name: Install Windows Exporter
+      win_package:
+        path: "{{ work_dir }}\\windows_exporter.msi"
+        arguments: ENABLED_COLLECTORS="cpu,cs,logical_disk,memory,net,os,service,system" LISTEN_PORT=9182
+        state: present
+
+    - name: Open Firewall for Windows Exporter
+      win_firewall_rule:
+        name: "Allow Windows Exporter"
+        direction: in
+        action: allow
+        protocol: tcp
+        localport: 9182
+        enabled: yes

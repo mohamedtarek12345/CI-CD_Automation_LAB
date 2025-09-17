@@ -1,0 +1,35 @@
+# Local & Secrets
+*.log
+.env
+secrets.yaml
+vault-token.txt
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# Binaries & Caches
+node_modules/
+__pycache__/
+*.pyc
+*.exe
+*.msi
+
+# Tools & Editors
+.jenkins/
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Jenkins & Build Artifacts
+workspace/
+target/
+build/
+dist/
+*.jar
+*.war
+
+# Ansible
+.retry

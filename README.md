@@ -71,6 +71,8 @@ graph TD
     class N,O,P,Q,R,S,T,U infra
 \`\`\`
 
+![CI/CD Lab Architecture](images/architecture.png)
+
 ## 🚦 Setup Guide
 
 1. Deploy Vault:  

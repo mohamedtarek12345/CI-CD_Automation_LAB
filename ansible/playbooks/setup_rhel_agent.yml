@@ -1,0 +1,51 @@
+---
+- name: Configure RHEL VM as Jenkins Agent & Monitoring Target
+  hosts: rhel-agents
+  become: yes
+  tasks:
+    - name: Install Git
+      yum:
+        name: git
+        state: present
+
+    - name: Install Java (for Jenkins agent)
+      yum:
+        name: java-11-openjdk
+        state: present
+
+    - name: Install Node Exporter (for Prometheus)
+      get_url:
+        url: https://github.com/prometheus/node_exporter/releases/download/v1.6.1/node_exporter-1.6.1.linux-amd64.tar.gz
+        dest: /tmp/node_exporter.tar.gz
+
+    - name: Extract Node Exporter
+      unarchive:
+        src: /tmp/node_exporter.tar.gz
+        dest: /opt
+        remote_src: yes
+
+    - name: Create systemd service for Node Exporter
+      copy:
+        content: |
+          [Unit]
+          Description=Node Exporter
+          After=network.target
+          [Service]
+          User=root
+          ExecStart=/opt/node_exporter-1.6.1.linux-amd64/node_exporter
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/node_exporter.service
+
+    - name: Start and enable Node Exporter
+      systemd:
+        name: node_exporter
+        state: started
+        enabled: yes
+
+    - name: Open firewall for Node Exporter
+      firewalld:
+        port: 9100/tcp
+        permanent: yes
+        state: enabled
+        immediate: yes

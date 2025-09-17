@@ -1,0 +1,18 @@
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+meta
+  name: k8snoimagelatest
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sNoImageLatest
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8snoimagelatest
+        violation[{"msg": msg}] {
+          image := input.review.object.spec.containers[_].image
+          endswith(image, ":latest")
+          msg := sprintf("Image <%v> uses 'latest' tag", [image])
+        }
