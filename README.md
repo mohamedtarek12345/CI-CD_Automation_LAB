@@ -13,7 +13,7 @@
 
 ## 🖼️ Architecture
 
-\`\`\`mermaid
+```mermaid
 graph TD
     subgraph "Developer Workflow"
         A[Developer Pushes to GitHub] --> B[Jenkins CI Pipeline]
@@ -71,7 +71,7 @@ graph TD
     class H,I,J,K security
     class L,M1,M2,M3,M4 observability
     class N,O,P,Q,R,S,T,U infra
-\`\`\`
+```
 
 ![CI/CD Lab Architecture](./images/Architecture.png)
 
