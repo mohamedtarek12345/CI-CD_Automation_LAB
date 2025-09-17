@@ -3,6 +3,7 @@
 > Automated 95%+ of simulated enterprise pipeline using Jenkins + Flux CD on AKS, integrating **21+ tools** including Vault, Nexus, OPA, Windows/RHEL VMs, for zero-downtime, policy-compliant, observable deployments.
 
 ## 🧰 Tools Used
+
 - **CI/CD**: Jenkins, Flux CD, Git, Helm, Kustomize
 - **Infra**: AKS, Azure VMs (RHEL/Windows), Terraform, Ansible, Azure CLI
 - **Artifact**: Nexus Repository
@@ -11,6 +12,7 @@
 - **Notifications**: Slack
 
 ## 🖼️ Architecture
+
 \`\`\`mermaid
 graph TD
     subgraph "Developer Workflow"
@@ -87,7 +89,7 @@ graph TD
 
 3. Install OPA/Gatekeeper:  
    \`\`\`bash
-   kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/release-3.10/deploy/gatekeeper.yaml
+   kubectl apply -f <https://raw.githubusercontent.com/open-policy-agent/gatekeeper/release-3.10/deploy/gatekeeper.yaml>
    kubectl apply -f policies/
    \`\`\`
 
